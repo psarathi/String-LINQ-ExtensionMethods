@@ -64,24 +64,22 @@ public static class LinqExtension
     /// </summary>
     /// <typeparam name="T">The type of the collection</typeparam>
     /// <param name="source">The collection of items</param>
-    /// <param name="indexOfItemsToTake">An array of indices of the items to take</param>
+    /// <param name="indexOfItemsToTake">A collection of indices of the items to take</param>
     /// <returns>A collection of items whose indices were provided</returns>
-    public static IEnumerable<T>? TakeNs<T>(this IEnumerable<T>? source, params int[] indexOfItemsToTake)
+    public static IEnumerable<T>? TakeNs<T>(this IEnumerable<T>? source, params ReadOnlySpan<int> indexOfItemsToTake)
     {
         if (source is null)
             return null;
-
-        if (indexOfItemsToTake is null)
-            return source;
 
         var sourceList = source.ToList();
 
         if (sourceList.Count == 0)
             return null;
 
-        return indexOfItemsToTake.Length == 0
-            ? null
-            : sourceList.Where((_, i) => indexOfItemsToTake.Contains(i));
+        if (indexOfItemsToTake.Length == 0)
+            return null;
+
+        return sourceList.Where((_, i) => indexOfItemsToTake.Contains(i));
     }
 
     /// <summary>
@@ -89,23 +87,21 @@ public static class LinqExtension
     /// </summary>
     /// <typeparam name="T">The type of the collection</typeparam>
     /// <param name="source">The collection of items</param>
-    /// <param name="indexOfItemsToSkip">An array of indices of the items to skip</param>
+    /// <param name="indexOfItemsToSkip">A collection of indices of the items to skip</param>
     /// <returns>A collection of items without the skipped ones</returns>
-    public static IEnumerable<T>? SkipNs<T>(this IEnumerable<T>? source, params int[] indexOfItemsToSkip)
+    public static IEnumerable<T>? SkipNs<T>(this IEnumerable<T>? source, params ReadOnlySpan<int> indexOfItemsToSkip)
     {
         if (source is null)
             return null;
-
-        if (indexOfItemsToSkip is null)
-            return source;
 
         var sourceList = source.ToList();
 
         if (sourceList.Count == 0)
             return null;
 
-        return indexOfItemsToSkip.Length == 0
-            ? source
-            : sourceList.Where((_, i) => !indexOfItemsToSkip.Contains(i));
+        if (indexOfItemsToSkip.Length == 0)
+            return source;
+
+        return sourceList.Where((_, i) => !indexOfItemsToSkip.Contains(i));
     }
 }

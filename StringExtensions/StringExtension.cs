@@ -60,20 +60,11 @@ public static class StringExtension
     /// <param name="source">The source string</param>
     /// <param name="numberOfCharacters">Number of characters to be extracted from left</param>
     /// <returns>The string of extracted characters</returns>
-    public static string? Left(this string? source, int numberOfCharacters)
-    {
-        if (source is null)
-            return null;
-
-        // Get characters from the right if number of characters is less than 0
-        if (numberOfCharacters < 0)
-            return Right(source, Math.Abs(numberOfCharacters));
-
-        if (numberOfCharacters == 0)
-            return string.Empty;
-
-        return numberOfCharacters >= source.Length ? source : source[..numberOfCharacters];
-    }
+    public static string? Left(this string? source, int numberOfCharacters) =>
+        source is null ? null :
+        numberOfCharacters < 0 ? Right(source, Math.Abs(numberOfCharacters)) :
+        numberOfCharacters == 0 ? string.Empty :
+        numberOfCharacters >= source.Length ? source : source[..numberOfCharacters];
 
     /// <summary>
     /// Gets all the characters from the left of a given substring
@@ -102,20 +93,11 @@ public static class StringExtension
     /// <param name="source">The source string</param>
     /// <param name="numberOfCharacters">Number of characters to be extracted from right</param>
     /// <returns>The string of extracted characters</returns>
-    public static string? Right(this string? source, int numberOfCharacters)
-    {
-        if (source is null)
-            return null;
-
-        // Get characters from the left if number of characters is less than 0
-        if (numberOfCharacters < 0)
-            return Left(source, Math.Abs(numberOfCharacters));
-
-        if (numberOfCharacters == 0)
-            return string.Empty;
-
-        return numberOfCharacters >= source.Length ? source : source[^numberOfCharacters..];
-    }
+    public static string? Right(this string? source, int numberOfCharacters) =>
+        source is null ? null :
+        numberOfCharacters < 0 ? Left(source, Math.Abs(numberOfCharacters)) :
+        numberOfCharacters == 0 ? string.Empty :
+        numberOfCharacters >= source.Length ? source : source[^numberOfCharacters..];
 
     /// <summary>
     /// Gets all the characters from the right of a given substring
@@ -235,7 +217,7 @@ public static class StringExtension
             return null;
 
         var words = source.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-        return justUnique ? words.Distinct().ToArray() : words;
+        return justUnique ? [.. words.Distinct()] : words;
     }
 
     /// <summary>
@@ -268,9 +250,9 @@ public static class StringExtension
 
         return sortOrder switch
         {
-            0 => wordFrequency.ToDictionary(k => k.Key, v => v.Value),
-            < 0 => wordFrequency.OrderByDescending(f => f.Value).ToDictionary(k => k.Key, v => v.Value),
-            > 0 => wordFrequency.OrderBy(f => f.Value).ToDictionary(k => k.Key, v => v.Value)
+            0 => wordFrequency.ToDictionary(),
+            < 0 => wordFrequency.OrderByDescending(f => f.Value).ToDictionary(),
+            > 0 => wordFrequency.OrderBy(f => f.Value).ToDictionary()
         };
     }
 
@@ -304,15 +286,10 @@ public static class StringExtension
     /// </summary>
     /// <param name="source">The source string</param>
     /// <returns>A collection of sentences</returns>
-    public static ICollection<string>? Sentences(this string? source)
-    {
-        // todo: improve the algorithm to get sentences. Right now it'll treat every '.' as a sentence delimiter, which may not be true if there is e.g. a url in the string
-        return string.IsNullOrEmpty(source)
+    public static ICollection<string>? Sentences(this string? source) =>
+        string.IsNullOrEmpty(source)
             ? null
-            : source.Split(['.'], StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .ToArray();
-    }
+            : [.. source.Split(['.'], StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim())];
 
     /// <summary>
     /// Gets the count of sentences in the string
@@ -328,15 +305,12 @@ public static class StringExtension
     /// <param name="source">The source string</param>
     /// <param name="reverseWords">Optional: Whether the words need to be reversed as well</param>
     /// <returns>The reversed string</returns>
-    public static string? Reverse(this string? source, bool reverseWords = false)
-    {
-        if (string.IsNullOrEmpty(source))
-            return null;
-
-        return reverseWords
-            ? string.Join("", source.Reverse())
-            : string.Join(" ", source.Split(' ').Reverse());
-    }
+    public static string? Reverse(this string? source, bool reverseWords = false) =>
+        string.IsNullOrEmpty(source)
+            ? null
+            : reverseWords
+                ? string.Join("", source.Reverse())
+                : string.Join(" ", source.Split(' ').Reverse());
 
     /// <summary>
     /// Gets the frequency of occurrence of a given string
@@ -346,15 +320,12 @@ public static class StringExtension
     /// <param name="isRegEx">Optional: Whether the string is a regular expression pattern</param>
     /// <param name="regexOptions">Optional: The regular expression options</param>
     /// <returns>The frequency of occurrence of the given string or regular expression</returns>
-    public static int Frequency(this string? source, string? stringToMatch, bool isRegEx = false, RegexOptions regexOptions = RegexOptions.None)
-    {
-        if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(stringToMatch))
-            return 0;
-
-        return isRegEx
-            ? RegexMatches(source, stringToMatch, regexOptions).Count()
-            : source.Split([stringToMatch], StringSplitOptions.None).Length - 1;
-    }
+    public static int Frequency(this string? source, string? stringToMatch, bool isRegEx = false, RegexOptions regexOptions = RegexOptions.None) =>
+        string.IsNullOrEmpty(source) || string.IsNullOrEmpty(stringToMatch)
+            ? 0
+            : isRegEx
+                ? RegexMatches(source, stringToMatch, regexOptions).Count()
+                : source.Split([stringToMatch], StringSplitOptions.None).Length - 1;
 
     /// <summary>
     /// Gets the truncated version of the string
@@ -691,13 +662,8 @@ public static class StringExtension
         if (string.IsNullOrEmpty(source) || stringsToReplace is null || replacementStrings is null)
             return source;
 
-        var result = source;
-        foreach (var (stringToReplace, replacement) in stringsToReplace.Zip(replacementStrings))
-        {
-            result = result.Replace(stringToReplace, replacement);
-        }
-
-        return result;
+        return stringsToReplace.Zip(replacementStrings)
+            .Aggregate(source, (current, pair) => current.Replace(pair.First, pair.Second));
     }
 
     /// <summary>
@@ -707,15 +673,12 @@ public static class StringExtension
     /// <param name="specificHtmlTagRegex">Optional: Regular expression pattern for any specific tags</param>
     /// <param name="regexOptions">Optional: Regular expression options</param>
     /// <returns>The string without the HTML tags</returns>
-    public static string? RemoveHtmlTags(this string? source, string specificHtmlTagRegex = "", RegexOptions regexOptions = RegexOptions.None)
-    {
-        if (string.IsNullOrEmpty(source))
-            return null;
-
-        return string.IsNullOrEmpty(specificHtmlTagRegex)
-            ? Regex.Replace(source, @"<.*?>", string.Empty, regexOptions)
-            : Regex.Replace(source, specificHtmlTagRegex, string.Empty, regexOptions);
-    }
+    public static string? RemoveHtmlTags(this string? source, string specificHtmlTagRegex = "", RegexOptions regexOptions = RegexOptions.None) =>
+        string.IsNullOrEmpty(source)
+            ? null
+            : string.IsNullOrEmpty(specificHtmlTagRegex)
+                ? Regex.Replace(source, @"<.*?>", string.Empty, regexOptions)
+                : Regex.Replace(source, specificHtmlTagRegex, string.Empty, regexOptions);
 
     /// <summary>
     /// Replaces the HTML line break tags with new line characters
